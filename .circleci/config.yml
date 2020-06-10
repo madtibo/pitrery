@@ -1,57 +1,13 @@
+# Use the latest 2.1 version of CircleCI pipeline process engine. See: https://circleci.com/docs/2.0/configuration-reference
 version: 2.1
-
-jobs:
-  tests:
-    parameters:
-      dist:
-        description: "Execution Linux distribution"
-        type: enum
-        enum: [centos6, centos7, stretch, buster]
-      pgversion:
-        description: "PostgreSQL dotted major version"
-        type: string
-    docker: [image: "dalibo/temboard-agent-sdk:<< parameters.dist >>"]
-    working_directory: /tmp/project/
-    steps:
-      - checkout
-      - run:
-          name: Install pitrery
-          command: make install
-      - run:
-          name: functional tests
-          command: "sudo -su postgres PGVERSION=<< parameters.pgversion >> ./script/funcenv"
-
-  shellcheck:
-    docker: [image: "dalibo/temboard-agent-sdk:buster"]
-    working_directory: /tmp/project/
-    steps:
-      - checkout
-      - run:
-          name: Shellcheck code analysis
-          command: shellcheck -f gcc pitrery archive_wal restore_wal
-
+# Use a package of configuration called an orb.
+orbs:
+  # Declare a dependency on the welcome-orb
+  welcome: circleci/welcome-orb@0.4.1
+# Orchestrate or schedule a set of jobs
 workflows:
-  version: 2
-  pipeline:
+  # Name the workflow "welcome"
+  welcome:
+    # Run the welcome/run job in its own container
     jobs:
-    - tests:
-        name: buster-12
-        dist: buster
-        pgversion: "12"
-    - tests:
-        name: stretch-96
-        dist: stretch
-        pgversion: "9.6"
-    - tests:
-        name: centos7-12
-        dist: centos7
-        pgversion: "12"
-    - tests:
-        name: centos7-10
-        dist: centos7
-        pgversion: "10"
-    - tests:
-        name: centos6-95
-        dist: centos6
-        pgversion: "9.5"
-    - shellcheck
+      - welcome/run
